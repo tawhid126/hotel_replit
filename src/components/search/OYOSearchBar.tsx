@@ -208,14 +208,14 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
     <div className={`w-full ${className}`}>
       <div className="bg-white rounded-lg shadow-lg overflow-visible">
         <form onSubmit={handleSearch} className="flex items-stretch">
-          {/* Location Input */}
-          <div className="flex-1 relative px-4 py-3 border-r border-gray-200">
+          {/* Location Input - 35% width */}
+          <div className="relative px-4 py-3 border-r border-gray-200" style={{ width: '35%' }}>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by city, hotel, or neighborhood"
-              className="w-full text-sm text-gray-900 placeholder-gray-400 border-none outline-none bg-transparent pr-20"
+              placeholder="Search by city, hotel..."
+              className="w-full text-sm text-gray-900 placeholder-gray-400 border-none outline-none bg-transparent pr-16"
             />
             <button
               type="button"
@@ -226,16 +226,16 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <span>Near me</span>
+              <span className="hidden sm:inline">Near me</span>
             </button>
           </div>
 
-          {/* Date Range */}
-          <div className="relative border-r border-gray-200" ref={datePickerRef}>
+          {/* Date Range - 30% width */}
+          <div className="relative border-r border-gray-200" style={{ width: '30%' }} ref={datePickerRef}>
             <button
               type="button"
               onClick={() => setShowDatePicker(!showDatePicker)}
-              className="px-4 py-3 text-sm text-gray-900 hover:bg-gray-50 transition-colors whitespace-nowrap h-full"
+              className="w-full px-4 py-3 text-sm text-gray-900 hover:bg-gray-50 transition-colors whitespace-nowrap h-full text-left"
             >
               {formatDateRange()}
             </button>
@@ -298,12 +298,12 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
             )}
           </div>
 
-          {/* Rooms & Guests */}
-          <div className="relative border-r border-gray-200" ref={roomGuestPickerRef}>
+          {/* Rooms & Guests - 25% width */}
+          <div className="relative border-r border-gray-200" style={{ width: '25%' }} ref={roomGuestPickerRef}>
             <button
               type="button"
               onClick={() => setShowRoomGuestPicker(!showRoomGuestPicker)}
-              className="px-4 py-3 text-sm text-gray-900 hover:bg-gray-50 transition-colors whitespace-nowrap h-full"
+              className="w-full px-4 py-3 text-sm text-gray-900 hover:bg-gray-50 transition-colors whitespace-nowrap h-full text-left"
             >
               {rooms} Room{rooms > 1 ? 's' : ''}, {guests} Guest{guests > 1 ? 's' : ''}
             </button>
@@ -396,10 +396,11 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
             )}
           </div>
 
-          {/* Search Button */}
+          {/* Search Button - 10% width */}
           <button
             type="submit"
-            className="px-8 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm transition-colors rounded-r-lg"
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold text-sm transition-colors rounded-r-lg"
+            style={{ width: '10%', minWidth: '80px' }}
           >
             Search
           </button>

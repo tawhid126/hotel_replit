@@ -30,7 +30,7 @@ export default function HomePage() {
       <SeasonalOffersBanner />
       
       {/* Hero Section - OYO Style */}
-      <section className="relative min-h-[600px] flex items-center pb-90">
+      <section className="relative min-h-[550px] flex items-center pb-90">
         {/* Background Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
