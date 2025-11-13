@@ -1,0 +1,334 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  HOTEL_OWNER
+  CUSTOMER
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentMethod {
+  BKASH
+  NAGAD
+  BANK
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          UserRole  @default(CUSTOMER)
+  phone         String?
+  address       String?
+  referralCode  String?   @unique
+  referredBy    String?
+  referralBonus Float     @default(0)
+  smsEnabled    Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  bookings      Booking[]
+  reviews       Review[]
+  ownedHotel    Hotel?
+  referrals     User[]    @relation("Referrals")
+  referrer      User?     @relation("Referrals", fields: [referredBy], references: [referralCode])
+  notifications Notification[]
+  chats         Chat[]
+  adminChats    Chat[]    @relation("AdminChats")
+  messages      Message[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Hotel {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  address     String
+  city        String
+  country     String
+  latitude    Float
+  longitude   Float
+  rating      Float    @default(0)
+  totalReviews Int     @default(0)
+  images      String[]
+  facilities  String[]
+  ownerId     String   @unique
+  ownerPassword String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  owner         User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  roomCategories RoomCategory[]
+  bookings      Booking[]
+  reviews       Review[]
+}
+
+model RoomCategory {
+  id          String   @id @default(cuid())
+  hotelId     String
+  name        String
+  description String?
+  images      String[]
+  maxGuests   Int
+  totalRooms  Int      @default(1)
+  availableRooms Int   @default(1) // Real-time availability tracking
+  amenities   String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  hotel     Hotel       @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  prices    Price[]
+  bookings  Booking[]
+}
+
+model Price {
+  id             String @id @default(cuid())
+  roomCategoryId String
+  guestCount     Int
+  price          Float
+
+  // Relations
+  roomCategory RoomCategory @relation(fields: [roomCategoryId], references: [id], onDelete: Cascade)
+
+  @@unique([roomCategoryId, guestCount])
+}
+
+model Booking {
+  id             String        @id @default(cuid())
+  userId         String
+  hotelId        String
+  roomCategoryId String
+  checkIn        DateTime
+  checkOut       DateTime
+  guestCount     Int
+  totalPrice     Float
+  status         BookingStatus @default(PENDING)
+  specialRequests String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Relations
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotel        Hotel        @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  roomCategory RoomCategory @relation(fields: [roomCategoryId], references: [id], onDelete: Cascade)
+  payment      Payment?
+  invoice      Invoice?
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  bookingId     String        @unique
+  amount        Float
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  transactionId String?       @unique
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  booking     Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  transaction Transaction?
+}
+
+model Transaction {
+  id              String   @id @default(cuid())
+  paymentId       String   @unique
+  amount          Float
+  currency        String   @default("BDT")
+  description     String?
+  providerResponse String?
+  createdAt       DateTime @default(now())
+
+  // Relations
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id          String   @id @default(cuid())
+  bookingId   String   @unique
+  invoiceNumber String @unique
+  amount      Float
+  pdfUrl      String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  hotelId   String
+  rating    Int
+  comment   String?
+  isApproved Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, hotelId])
+}
+
+model Coupon {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  description String?
+  discount    Float
+  isPercentage Boolean @default(true)
+  minAmount   Float?
+  maxDiscount Float?
+  validFrom   DateTime
+  validTo     DateTime
+  isActive    Boolean  @default(true)
+  usageLimit  Int?
+  usedCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Chat {
+  id        String   @id @default(cuid())
+  userId    String
+  adminId   String?
+  status    ChatStatus @default(OPEN)
+  subject   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  closedAt  DateTime?
+
+  // Relations
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin    User?     @relation("AdminChats", fields: [adminId], references: [id])
+  messages Message[]
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  chatId    String
+  senderId  String
+  content   String   @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  chat   Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model ContactRequest {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String   @db.Text
+  status    ContactStatus @default(PENDING)
+  response  String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FAQ {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String   @db.Text
+  category  String
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ChatStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
+enum ContactStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}

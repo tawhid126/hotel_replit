@@ -1,0 +1,86 @@
+I want to build a dynamic hotel booking website that will feature multiple hotels. Users will be able to view all available hotels, search by location, or find the nearest hotel based on their current location. Each hotel will include a Google Maps link for easy navigation.
+If there are many hotels, they will not all be displayed at once — instead, they will be shown through a pagination system.
+When a user clicks on a hotel, they can view its services. There will be a “View Details” button, and clicking it will display all the room categories for that hotel — such as Budget, Luxury, Premium, etc. Users can then book rooms from these categories.
+During the booking process, there will be payment options such as Bkash, Nagad, and Bank (the payment gateway will be fully implemented). Users will also have the option to cancel bookings.
+There will be Login/Sign Up options for users (Sign Up must be implemented using Firebase).
+After logging in, users will have access to their personal page, where they can view their previous bookings and details, and can also book rooms directly from the homepage.
+An Admin Panel will be included, giving the admin full access to all hotels. The admin can add or remove hotels, and most importantly, add hotel details.
+Suppose a hotel has three room categories:
+Budget
+Luxury
+President
+Each category will have its own pricing structure. For example:
+Budget Room:
+1 person → 2500 BDT
+2 persons → 2999 BDT
+3 persons → 3500 BDT
+Similarly, Luxury, Premium, and President categories will have their own price settings.
+When a hotel is added, all types of images can be uploaded. Since hotels have rooms under different categories, the admin (or hotel owner) must select the category (e.g., Luxury) and set the price — for example:
+Price for 1 person, 2 persons, 3 persons, etc.
+Maximum number of guests allowed (this should be dynamically adjustable).
+Upload photos for each category (Luxury, President, Deluxe, etc.).
+If a hotel has multiple categories, then each category will be added in this way.
+All values and data will be dynamic, so that updates in one place automatically reflect across the system in real time.
+When an admin adds a hotel, an ID and Password will be generated for the hotel owner.
+Hotel Owner Login System:
+A hotel owner can only log in to update services for their own hotel — not others.
+
+other featurse :
+
+🧭 1. Advanced Search & Filters
+Filter by price range, room type, and facilities (e.g., Wi-Fi, AC, Pool, Parking)
+Sort by: price (low → high / high → low), rating, distance, etc.
+Date filter: availability based on check-in & check-out dates
+⭐️ 2. Hotel & Room Ratings & Reviews
+Users can give ratings and reviews after booking
+Each hotel will display its average rating
+Admin can moderate reviews (delete inappropriate or false reviews)
+💬 3. Customer Support / Chat System
+Live chat option (with hotel support or admin)
+Or a contact form / chatbot where users can ask questions
+📱 4. Responsive & Progressive Web App (PWA)
+Full booking functionality on mobile devices
+Offline view for recently viewed hotels
+Option to add the website to the home screen (PWA support)
+💳 5. Discount / Coupon / Offer System
+Promo code system for discounts
+Seasonal offers (e.g., 10% off on weekends or new users)
+Referral system (users earn bonuses for inviting others)
+📅 6. Real-Time Room Availability
+When a user books a room, the available room count updates in real-time
+If a booking is canceled, the room becomes available automatically
+📧 7. Email / SMS Notifications
+Booking confirmation via email or SMS
+Cancellation confirmation messages
+Payment success notifications
+🧑‍💼 8. Multiple User Roles
+Admin → can manage everything
+Hotel Owner → can manage only their own hotel
+Customer → can manage bookings and personal profile
+(Optional future addition) Staff / Receptionist roles
+🏦 9. Transaction History & Invoice System
+Invoice PDF download for every booking
+Both Admin and Users can view their transaction history
+📍 10. Map Integration & Distance Calculation
+Using Google Maps API to show the distance like:
+“2.3 km away from your current location”
+Display nearby attractions (e.g., restaurants, hospitals)
+🔐 11. Security & Data Protection
+JWT authentication / Firebase Auth integration
+Password hashing
+Protection against SQL Injection & XSS attacks
+HTTPS / SSL for secure data transfer
+🧾 12. Dashboard Analytics (for Admin & Hotel Owners)
+Display total bookings, total revenue, etc.
+Monthly / weekly statistics
+Most booked hotels and popular room categories
+☁️ 13. Cloud Image Storage
+Use Firebase Storage or Cloudinary for image uploads
+Images are optimized for faster loading
+
+{
+Next.js + tRPC + Prisma + NextAuth (T3 Stack)
+If there is anything better than this(language / framework / database), work with that, and if there is none, work with these.
+}
+
+Check whether everything mentioned here has been implemented in both the frontend and backend. If not, complete the remaining tasks.

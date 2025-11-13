@@ -1,0 +1,26 @@
+I want to build a dynamic hotel booking website that will feature multiple hotels. Users will be able to view all available hotels, search by location, or find the nearest hotel based on their current location. Each hotel will include a Google Maps link for easy navigation.
+If there are many hotels, they will not all be displayed at once — instead, they will be shown through a pagination system.
+When a user clicks on a hotel, they can view its services. There will be a “View Details” button, and clicking it will display all the room categories for that hotel — such as Budget, Luxury, Premium, etc. Users can then book rooms from these categories.
+During the booking process, there will be payment options such as Bkash, Nagad, and Bank (the payment gateway will be fully implemented). Users will also have the option to cancel bookings.
+There will be Login/Sign Up options for users (Sign Up must be implemented using Firebase).
+After logging in, users will have access to their personal page, where they can view their previous bookings and details, and can also book rooms directly from the homepage.
+An Admin Panel will be included, giving the admin full access to all hotels. The admin can add or remove hotels, and most importantly, add hotel details.
+Suppose a hotel has three room categories:
+Budget
+Luxury
+President
+Each category will have its own pricing structure. For example:
+Budget Room:
+1 person → 2500 BDT
+2 persons → 2999 BDT
+3 persons → 3500 BDT
+Similarly, Luxury, Premium, and President categories will have their own price settings.
+When a hotel is added, all types of images can be uploaded. Since hotels have rooms under different categories, the admin (or hotel owner) must select the category (e.g., Luxury) and set the price — for example:
+Price for 1 person, 2 persons, 3 persons, etc.
+Maximum number of guests allowed (this should be dynamically adjustable).
+Upload photos for each category (Luxury, President, Deluxe, etc.).
+If a hotel has multiple categories, then each category will be added in this way.
+All values and data will be dynamic, so that updates in one place automatically reflect across the system in real time.
+When an admin adds a hotel, an ID and Password will be generated for the hotel owner.
+Hotel Owner Login System:
+A hotel owner can only log in to update services for their own hotel — not others.
