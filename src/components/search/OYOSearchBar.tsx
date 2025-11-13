@@ -81,7 +81,13 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
-    if (checkInDate && checkOutDate && checkOutDate <= checkInDate) {
+    // Validate dates are selected
+    if (!checkInDate || !checkOutDate) {
+      toast.error("Please select check-in and check-out dates");
+      return;
+    }
+    
+    if (checkOutDate <= checkInDate) {
       toast.error("Check-out date must be after check-in date");
       return;
     }
@@ -90,8 +96,8 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
     if (searchQuery && searchQuery !== "Around Me") params.set("search", searchQuery);
     if (rooms) params.set("rooms", rooms.toString());
     if (guests) params.set("guests", guests.toString());
-    if (checkInDate) params.set("checkIn", checkInDate.toISOString().split('T')[0]!);
-    if (checkOutDate) params.set("checkOut", checkOutDate.toISOString().split('T')[0]!);
+    params.set("checkIn", checkInDate.toISOString().split('T')[0]!);
+    params.set("checkOut", checkOutDate.toISOString().split('T')[0]!);
     if (coords) {
       params.set("lat", String(coords.lat));
       params.set("lng", String(coords.lng));
@@ -208,8 +214,8 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
     <div className={`w-full ${className}`}>
       <div className="bg-white rounded-lg shadow-lg overflow-visible">
         <form onSubmit={handleSearch} className="flex items-stretch">
-          {/* Location Input - 35% width */}
-          <div className="relative px-4 py-3 border-r border-gray-200" style={{ width: '35%' }}>
+          {/* Location Input - 34% width */}
+          <div className="relative px-4 py-3 border-r border-gray-200" style={{ width: '34%' }}>
             <input
               type="text"
               value={searchQuery}
@@ -230,8 +236,8 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
             </button>
           </div>
 
-          {/* Date Range - 30% width */}
-          <div className="relative border-r border-gray-200" style={{ width: '30%' }} ref={datePickerRef}>
+          {/* Date Range - 27% width */}
+          <div className="relative border-r border-gray-200" style={{ width: '27%' }} ref={datePickerRef}>
             <button
               type="button"
               onClick={() => setShowDatePicker(!showDatePicker)}
@@ -298,8 +304,8 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
             )}
           </div>
 
-          {/* Rooms & Guests - 25% width */}
-          <div className="relative border-r border-gray-200" style={{ width: '25%' }} ref={roomGuestPickerRef}>
+          {/* Rooms & Guests - 24% width */}
+          <div className="relative border-r border-gray-200" style={{ width: '24%' }} ref={roomGuestPickerRef}>
             <button
               type="button"
               onClick={() => setShowRoomGuestPicker(!showRoomGuestPicker)}
@@ -396,11 +402,11 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
             )}
           </div>
 
-          {/* Search Button - 10% width */}
+          {/* Search Button - 15% width */}
           <button
             type="submit"
             className="bg-green-600 hover:bg-green-700 text-white font-semibold text-sm transition-colors rounded-r-lg"
-            style={{ width: '10%', minWidth: '80px' }}
+            style={{ width: '15%', minWidth: '80px' }}
           >
             Search
           </button>
