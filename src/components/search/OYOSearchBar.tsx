@@ -26,11 +26,12 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
   const roomGuestPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    setCheckInDate(today);
-    setCheckOutDate(tomorrow);
+    // Don't set default dates - let user choose their dates
+    // const today = new Date();
+    // const tomorrow = new Date(today);
+    // tomorrow.setDate(tomorrow.getDate() + 1);
+    // setCheckInDate(today);
+    // setCheckOutDate(tomorrow);
   }, []);
 
   useEffect(() => {
@@ -113,7 +114,9 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
+    // Adjust for Monday start (0 = Sunday, we want Monday = 0)
+    let startingDayOfWeek = firstDay.getDay() - 1;
+    if (startingDayOfWeek < 0) startingDayOfWeek = 6;
     
     return { daysInMonth, startingDayOfWeek, year, month };
   };
@@ -203,7 +206,7 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
 
   return (
     <div className={`w-full ${className}`}>
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+      <div className="bg-white rounded-lg shadow-lg overflow-visible">
         <form onSubmit={handleSearch} className="flex items-stretch">
           {/* Location Input */}
           <div className="flex-1 relative px-4 py-3 border-r border-gray-200">
@@ -238,12 +241,60 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
             </button>
             
             {showDatePicker && (
-              <div className="absolute top-full left-0 mt-2 bg-white shadow-2xl rounded-lg border border-gray-200 p-6 z-[9999]">
-                <div className="flex gap-8">
-                  {renderCalendar(0)}
-                  {renderCalendar(1)}
+              <>
+                {/* Backdrop to close calendar */}
+                <div 
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowDatePicker(false)}
+                />
+                {/* Calendar Dropdown */}
+                <div 
+                  className="absolute top-full left-0 mt-2 bg-white shadow-2xl rounded-lg border border-gray-200 p-6 z-50"
+                  style={{ minWidth: '650px' }}
+                >
+                  {/* Month Navigation */}
+                  <div className="flex items-center justify-between mb-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newMonth = new Date(currentMonth);
+                        newMonth.setMonth(newMonth.getMonth() - 1);
+                        // Don't allow going to past months
+                        const today = new Date();
+                        if (newMonth >= new Date(today.getFullYear(), today.getMonth(), 1)) {
+                          setCurrentMonth(newMonth);
+                        }
+                      }}
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <div className="text-sm font-medium text-gray-600">
+                      Select your check-in and check-out dates
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newMonth = new Date(currentMonth);
+                        newMonth.setMonth(newMonth.getMonth() + 1);
+                        setCurrentMonth(newMonth);
+                      }}
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  <div className="flex gap-8">
+                    {renderCalendar(0)}
+                    {renderCalendar(1)}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
 
@@ -258,82 +309,90 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
             </button>
 
             {showRoomGuestPicker && (
-              <div className="absolute top-full right-0 mt-2 w-80 bg-white shadow-2xl rounded-lg border border-gray-200 z-[9999] overflow-hidden">
-                {/* Tabs */}
-                <div className="flex border-b border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("rooms")}
-                    className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                      activeTab === "rooms" 
-                        ? "bg-gray-50 text-gray-900 border-b-2 border-green-600" 
-                        : "text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    Rooms
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("guests")}
-                    className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                      activeTab === "guests" 
-                        ? "bg-gray-50 text-gray-900 border-b-2 border-green-600" 
-                        : "text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    Guests
-                  </button>
-                </div>
+              <>
+                {/* Backdrop to close picker */}
+                <div 
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowRoomGuestPicker(false)}
+                />
+                {/* Room & Guest Picker Dropdown */}
+                <div className="absolute top-full right-0 mt-2 w-80 bg-white shadow-2xl rounded-lg border border-gray-200 z-50 overflow-hidden">
+                  {/* Tabs */}
+                  <div className="flex border-b border-gray-200">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("rooms")}
+                      className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                        activeTab === "rooms" 
+                          ? "bg-gray-50 text-gray-900 border-b-2 border-green-600" 
+                          : "text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      Rooms
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("guests")}
+                      className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                        activeTab === "guests" 
+                          ? "bg-gray-50 text-gray-900 border-b-2 border-green-600" 
+                          : "text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      Guests
+                    </button>
+                  </div>
 
-                {/* Content */}
-                <div className="p-4 max-h-80 overflow-y-auto">
-                  {roomConfigs.map((guestCount, index) => (
-                    <div key={index} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                      <span className="text-sm font-medium text-gray-900">Room {index + 1}</span>
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => updateRoomGuests(index, -1)}
-                          disabled={guestCount <= 1}
-                          className="w-8 h-8 rounded border border-gray-300 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold"
-                        >
-                          −
-                        </button>
-                        <span className="w-8 text-center font-medium">{guestCount}</span>
-                        <button
-                          type="button"
-                          onClick={() => updateRoomGuests(index, 1)}
-                          disabled={guestCount >= 10}
-                          className="w-8 h-8 rounded border border-gray-300 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold"
-                        >
-                          +
-                        </button>
+                  {/* Content */}
+                  <div className="p-4 max-h-80 overflow-y-auto">
+                    {roomConfigs.map((guestCount, index) => (
+                      <div key={index} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                        <span className="text-sm font-medium text-gray-900">Room {index + 1}</span>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => updateRoomGuests(index, -1)}
+                            disabled={guestCount <= 1}
+                            className="w-8 h-8 rounded border border-gray-300 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold"
+                          >
+                            −
+                          </button>
+                          <span className="w-8 text-center font-medium">{guestCount}</span>
+                          <button
+                            type="button"
+                            onClick={() => updateRoomGuests(index, 1)}
+                            disabled={guestCount >= 10}
+                            className="w-8 h-8 rounded border border-gray-300 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold"
+                          >
+                            +
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
 
-                {/* Footer */}
-                <div className="flex border-t border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => deleteRoom(roomConfigs.length - 1)}
-                    disabled={roomConfigs.length <= 1}
-                    className="flex-1 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    Delete Room
-                  </button>
-                  <div className="w-px bg-gray-200"></div>
-                  <button
-                    type="button"
-                    onClick={addRoom}
-                    disabled={roomConfigs.length >= 10}
-                    className="flex-1 py-3 text-sm font-medium text-green-600 hover:bg-green-50 disabled:opacity-30 disabled:cursor-not-allowed"
-                  >
-                    Add Room
-                  </button>
+                  {/* Footer */}
+                  <div className="flex border-t border-gray-200">
+                    <button
+                      type="button"
+                      onClick={() => deleteRoom(roomConfigs.length - 1)}
+                      disabled={roomConfigs.length <= 1}
+                      className="flex-1 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      Delete Room
+                    </button>
+                    <div className="w-px bg-gray-200"></div>
+                    <button
+                      type="button"
+                      onClick={addRoom}
+                      disabled={roomConfigs.length >= 10}
+                      className="flex-1 py-3 text-sm font-medium text-green-600 hover:bg-green-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      Add Room
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
 

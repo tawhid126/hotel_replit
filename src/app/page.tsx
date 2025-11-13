@@ -30,9 +30,15 @@ export default function HomePage() {
       <SeasonalOffersBanner />
       
       {/* Hero Section - OYO Style */}
-      <section className="relative min-h-[600px] flex items-center overflow-x-hidden">
-        {/* Animated Background - OYO Colors */}
-        <div className="absolute inset-0 bg-gradient-to-br from-red-600 via-orange-500 to-yellow-500"></div>
+      <section className="relative min-h-[600px] flex items-center pb-90">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: 'url(/hotel1.png)' }}
+        />
+        
+        {/* Purple Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 via-purple-800/70 to-blue-900/80"></div>
         
         {/* Overlay Pattern */}
         <div className="absolute inset-0 opacity-10">
@@ -48,13 +54,14 @@ export default function HomePage() {
 
         <div className="relative container mx-auto px-4 py-20">
           <div className="max-w-6xl mx-auto text-center">
-            {/* Hero Text - OYO Style */}
-            <div className="mb-8 space-y-2 animate-fade-in-up">
-              <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight">
-                Monsoon is here.
-                <br />
-                Where are you?
+            {/* Hero Text */}
+            <div className="mb-8 space-y-4 animate-fade-in-up">
+              <h1 className="text-5xl md:text-6xl font-bold text-white leading-tight">
+                Find Your Perfect Stay
               </h1>
+              <p className="text-xl md:text-2xl text-white/90 font-light">
+                Book luxury rooms and suites at the best prices worldwide
+              </p>
             </div>
 
             {/* OYO Search Bar */}
