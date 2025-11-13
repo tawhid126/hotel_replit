@@ -10,116 +10,48 @@ interface OYOSearchBarProps {
 
 export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [checkInDate, setCheckInDate] = useState("");
-  const [checkOutDate, setCheckOutDate] = useState("");
+  const [searchQuery, setSearchQuery] = useState("Around Me");
+  const [checkInDate, setCheckInDate] = useState<Date | null>(null);
+  const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
   const [rooms, setRooms] = useState(1);
-  const [guests, setGuests] = useState(2);
-  const [showGuestDropdown, setShowGuestDropdown] = useState(false);
-  const [showCheckInCalendar, setShowCheckInCalendar] = useState(false);
+  const [guests, setGuests] = useState(1);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showRoomGuestPicker, setShowRoomGuestPicker] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [activeTab, setActiveTab] = useState<"rooms" | "guests">("rooms");
+  const [roomConfigs, setRoomConfigs] = useState<number[]>([1]);
   
-  // Per-room guest tracking
-  const [roomGuests, setRoomGuests] = useState<number[]>([2]); // Start with 1 room, 2 guests
-  
-  const guestDropdownRef = useRef<HTMLDivElement>(null);
+  const datePickerRef = useRef<HTMLDivElement>(null);
+  const roomGuestPickerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-set dates (today and tomorrow)
   useEffect(() => {
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    const todayStr = today.toISOString().split('T')[0];
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
-    
-    if (todayStr) setCheckInDate(todayStr);
-    if (tomorrowStr) setCheckOutDate(tomorrowStr);
+    setCheckInDate(today);
+    setCheckOutDate(tomorrow);
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      
-      // Close guest dropdown
-      if (guestDropdownRef.current && !guestDropdownRef.current.contains(target)) {
-        setShowGuestDropdown(false);
+      if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
+        setShowDatePicker(false);
       }
-      
-      // Close date picker when clicking outside
-      if (showCheckInCalendar && !target.closest('.date-picker-popup') && !target.closest('.date-toggle-btn')) {
-        setShowCheckInCalendar(false);
+      if (roomGuestPickerRef.current && !roomGuestPickerRef.current.contains(event.target as Node)) {
+        setShowRoomGuestPicker(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showCheckInCalendar]);
+  }, []);
 
-  // Update total guests when roomGuests changes
   useEffect(() => {
-    const total = roomGuests.reduce((sum, count) => sum + count, 0);
+    const total = roomConfigs.reduce((sum, count) => sum + count, 0);
     setGuests(total);
-    setRooms(roomGuests.length);
-  }, [roomGuests]);
-
-  const addRoom = () => {
-    if (roomGuests.length < 10) {
-      setRoomGuests([...roomGuests, 1]);
-    }
-  };
-
-  const deleteRoom = () => {
-    if (roomGuests.length > 1) {
-      setRoomGuests(roomGuests.slice(0, -1));
-    }
-  };
-
-  const updateRoomGuests = (roomIndex: number, count: number) => {
-    const updated = [...roomGuests];
-    updated[roomIndex] = Math.max(1, Math.min(10, count));
-    setRoomGuests(updated);
-  };
-
-  const handleSearch = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    // Basic validation: check-out must be after check-in when both selected
-    if (checkInDate && checkOutDate) {
-      const inD = new Date(checkInDate);
-      const outD = new Date(checkOutDate);
-      if (outD <= inD) {
-        toast.error("Check-out date must be after check-in date");
-        return;
-      }
-    }
-    
-    const params = new URLSearchParams();
-    const trimmedQuery = searchQuery.trim();
-    if (trimmedQuery) params.set("search", trimmedQuery);
-    if (rooms) params.set("rooms", rooms.toString());
-    if (guests) params.set("guests", guests.toString());
-    if (checkInDate) params.set("checkIn", checkInDate);
-    if (checkOutDate) params.set("checkOut", checkOutDate);
-    if (coords) {
-      params.set("lat", String(coords.lat));
-      params.set("lng", String(coords.lng));
-    }
-    
-    router.push(`/hotels?${params.toString()}`);
-  };
-
-  // Removed unused formatDate helper to avoid lint warnings
-
-  const formatInputDate = (date: Date) => date.toISOString().split('T')[0];
-  const getMinCheckoutDate = () => {
-    if (checkInDate) {
-      const d = new Date(checkInDate);
-      d.setDate(d.getDate() + 1);
-      return formatInputDate(d);
-    }
-    return formatInputDate(new Date());
-  };
+    setRooms(roomConfigs.length);
+  }, [roomConfigs]);
 
   const getNearMe = () => {
     if (navigator.geolocation) {
@@ -127,7 +59,7 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
         new Promise((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(
             (position) => {
-              setSearchQuery("Near me");
+              setSearchQuery("Around Me");
               setCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
               resolve("Location detected");
             },
@@ -145,34 +77,147 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
     }
   };
 
-  const getDateRangeSummary = () => {
-    if (!checkInDate || !checkOutDate) return "";
-    const inDate = new Date(checkInDate);
-    const outDate = new Date(checkOutDate);
-    const inStr = inDate.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
-    const outStr = outDate.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
-    return `${inStr} – ${outStr}`;
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    
+    if (checkInDate && checkOutDate && checkOutDate <= checkInDate) {
+      toast.error("Check-out date must be after check-in date");
+      return;
+    }
+    
+    const params = new URLSearchParams();
+    if (searchQuery && searchQuery !== "Around Me") params.set("search", searchQuery);
+    if (rooms) params.set("rooms", rooms.toString());
+    if (guests) params.set("guests", guests.toString());
+    if (checkInDate) params.set("checkIn", checkInDate.toISOString().split('T')[0]!);
+    if (checkOutDate) params.set("checkOut", checkOutDate.toISOString().split('T')[0]!);
+    if (coords) {
+      params.set("lat", String(coords.lat));
+      params.set("lng", String(coords.lng));
+    }
+    
+    router.push(`/hotels?${params.toString()}`);
+  };
+
+  const formatDateRange = () => {
+    if (!checkInDate || !checkOutDate) return "Select dates";
+    const options: Intl.DateTimeFormatOptions = { weekday: 'short', day: 'numeric', month: 'short' };
+    const checkIn = checkInDate.toLocaleDateString('en-US', options);
+    const checkOut = checkOutDate.toLocaleDateString('en-US', options);
+    return `${checkIn} – ${checkOut}`;
+  };
+
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+    
+    return { daysInMonth, startingDayOfWeek, year, month };
+  };
+
+  const renderCalendar = (monthOffset: number) => {
+    const date = new Date(currentMonth);
+    date.setMonth(date.getMonth() + monthOffset);
+    const { daysInMonth, startingDayOfWeek, year, month } = getDaysInMonth(date);
+    
+    const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const days = [];
+    
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(<div key={`empty-${i}`} className="h-10"></div>);
+    }
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDate = new Date(year, month, day);
+      const isSelected = (checkInDate && currentDate.toDateString() === checkInDate.toDateString()) ||
+                        (checkOutDate && currentDate.toDateString() === checkOutDate.toDateString());
+      const isInRange = checkInDate && checkOutDate && 
+                       currentDate > checkInDate && currentDate < checkOutDate;
+      const isToday = currentDate.toDateString() === new Date().toDateString();
+      const isPast = currentDate < new Date(new Date().setHours(0, 0, 0, 0));
+      
+      days.push(
+        <button
+          key={day}
+          type="button"
+          disabled={isPast}
+          onClick={() => {
+            if (!checkInDate || (checkInDate && checkOutDate)) {
+              setCheckInDate(currentDate);
+              setCheckOutDate(null);
+            } else if (currentDate > checkInDate) {
+              setCheckOutDate(currentDate);
+            } else {
+              setCheckInDate(currentDate);
+              setCheckOutDate(null);
+            }
+          }}
+          className={`h-10 flex items-center justify-center text-sm rounded transition-colors
+            ${isPast ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100'}
+            ${isSelected ? 'bg-red-500 text-white hover:bg-red-600' : ''}
+            ${isInRange ? 'bg-red-50' : ''}
+            ${isToday && !isSelected ? 'font-bold text-red-500' : ''}
+          `}
+        >
+          {day}
+        </button>
+      );
+    }
+    
+    return (
+      <div className="flex-1 min-w-[280px]">
+        <div className="font-semibold text-center mb-3 text-gray-900">{monthName}</div>
+        <div className="grid grid-cols-7 gap-1 mb-2 text-xs font-medium text-gray-600">
+          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+            <div key={day} className="text-center">{day}</div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {days}
+        </div>
+      </div>
+    );
+  };
+
+  const addRoom = () => {
+    if (roomConfigs.length < 10) {
+      setRoomConfigs([...roomConfigs, 1]);
+    }
+  };
+
+  const deleteRoom = (index: number) => {
+    if (roomConfigs.length > 1) {
+      const newConfigs = roomConfigs.filter((_, i) => i !== index);
+      setRoomConfigs(newConfigs);
+    }
+  };
+
+  const updateRoomGuests = (index: number, delta: number) => {
+    const newConfigs = [...roomConfigs];
+    newConfigs[index] = Math.max(1, Math.min(10, (newConfigs[index] ?? 1) + delta));
+    setRoomConfigs(newConfigs);
   };
 
   return (
     <div className={`w-full ${className}`}>
-      <div className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
-        <form onSubmit={handleSearch} className="flex items-center" role="search" aria-label="Search hotels">
-          {/* Location Input with Near me pill */}
-          <div className="flex-1 relative px-5 py-4 border-r border-gray-200">
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <form onSubmit={handleSearch} className="flex items-stretch">
+          {/* Location Input */}
+          <div className="flex-1 relative px-4 py-3 border-r border-gray-200">
             <input
               type="text"
-              placeholder="Search by city, hotel, or neighborhood"
-              id="location-input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-base text-gray-900 placeholder-gray-400 border-none outline-none bg-transparent pr-28"
+              placeholder="Search by city, hotel, or neighborhood"
+              className="w-full text-sm text-gray-900 placeholder-gray-400 border-none outline-none bg-transparent pr-20"
             />
             <button
               type="button"
               onClick={getNearMe}
-              className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 transition-all"
-              title="Use my current location"
+              className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -182,98 +227,84 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
             </button>
           </div>
 
-          {/* Date Range - Combined */}
-          <div className="relative border-r border-gray-200">
+          {/* Date Range */}
+          <div className="relative border-r border-gray-200" ref={datePickerRef}>
             <button
               type="button"
-              onClick={() => setShowCheckInCalendar(!showCheckInCalendar)}
-              className="date-toggle-btn flex items-center gap-2 px-6 py-4 hover:bg-gray-50 transition-colors min-w-[220px]"
+              onClick={() => setShowDatePicker(!showDatePicker)}
+              className="px-4 py-3 text-sm text-gray-900 hover:bg-gray-50 transition-colors whitespace-nowrap h-full"
             >
-              <span className="text-base text-gray-900 whitespace-nowrap font-normal">
-                {getDateRangeSummary() || "Select dates"}
-              </span>
+              {formatDateRange()}
             </button>
             
-            {/* Date picker popup on click */}
-            {showCheckInCalendar && (
-              <div className="date-picker-popup absolute top-full left-0 mt-2 bg-white shadow-xl rounded-lg border border-gray-200 p-4 z-[9999] min-w-[300px]">
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">Check-in</label>
-                    <input
-                      type="date"
-                      value={checkInDate}
-                      onChange={(e) => setCheckInDate(e.target.value)}
-                      min={formatInputDate(new Date())}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">Check-out</label>
-                    <input
-                      type="date"
-                      value={checkOutDate}
-                      onChange={(e) => setCheckOutDate(e.target.value)}
-                      min={getMinCheckoutDate()}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowCheckInCalendar(false)}
-                    className="w-full py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-md text-sm transition-colors"
-                  >
-                    Done
-                  </button>
+            {showDatePicker && (
+              <div className="absolute top-full left-0 mt-2 bg-white shadow-2xl rounded-lg border border-gray-200 p-6 z-[9999]">
+                <div className="flex gap-8">
+                  {renderCalendar(0)}
+                  {renderCalendar(1)}
                 </div>
               </div>
             )}
           </div>
 
           {/* Rooms & Guests */}
-          <div className="relative border-r border-gray-200" ref={guestDropdownRef}>
+          <div className="relative border-r border-gray-200" ref={roomGuestPickerRef}>
             <button
               type="button"
-              onClick={() => setShowGuestDropdown(!showGuestDropdown)}
-              className="px-6 py-4 text-base text-gray-900 hover:bg-gray-50 transition-colors whitespace-nowrap font-normal"
-              aria-haspopup="dialog"
-              aria-expanded={showGuestDropdown}
-              aria-controls="rooms-guests-dropdown"
+              onClick={() => setShowRoomGuestPicker(!showRoomGuestPicker)}
+              className="px-4 py-3 text-sm text-gray-900 hover:bg-gray-50 transition-colors whitespace-nowrap h-full"
             >
               {rooms} Room{rooms > 1 ? 's' : ''}, {guests} Guest{guests > 1 ? 's' : ''}
             </button>
 
-            {/* Dropdown - OYO Style */}
-            {showGuestDropdown && (
-              <div id="rooms-guests-dropdown" className="absolute z-[9999] top-full right-0 mt-2 w-96 bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden" role="dialog" aria-label="Select rooms and guests">
-                {/* Header */}
-                <div className="flex border-b border-gray-200 bg-gray-50">
-                  <div className="flex-1 text-center py-3 font-semibold text-gray-900 border-r border-gray-200">Rooms</div>
-                  <div className="flex-1 text-center py-3 font-semibold text-gray-900">Guests</div>
+            {showRoomGuestPicker && (
+              <div className="absolute top-full right-0 mt-2 w-80 bg-white shadow-2xl rounded-lg border border-gray-200 z-[9999] overflow-hidden">
+                {/* Tabs */}
+                <div className="flex border-b border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("rooms")}
+                    className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                      activeTab === "rooms" 
+                        ? "bg-gray-50 text-gray-900 border-b-2 border-green-600" 
+                        : "text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    Rooms
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("guests")}
+                    className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                      activeTab === "guests" 
+                        ? "bg-gray-50 text-gray-900 border-b-2 border-green-600" 
+                        : "text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    Guests
+                  </button>
                 </div>
 
-                {/* Room List */}
-                <div className="max-h-80 overflow-y-auto">
-                  {roomGuests.map((guestCount, index) => (
-                    <div key={index} className="flex items-center border-b border-gray-100 py-4 px-4 hover:bg-gray-50">
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">Room {index + 1}</p>
-                      </div>
-                      <div className="flex-1 flex items-center justify-center gap-3">
+                {/* Content */}
+                <div className="p-4 max-h-80 overflow-y-auto">
+                  {roomConfigs.map((guestCount, index) => (
+                    <div key={index} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                      <span className="text-sm font-medium text-gray-900">Room {index + 1}</span>
+                      <div className="flex items-center gap-3">
                         <button
                           type="button"
-                          onClick={() => updateRoomGuests(index, guestCount - 1)}
+                          onClick={() => updateRoomGuests(index, -1)}
                           disabled={guestCount <= 1}
-                          className="w-8 h-8 rounded border border-gray-300 hover:bg-gray-100 text-gray-700 font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
+                          className="w-8 h-8 rounded border border-gray-300 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold"
                         >
                           −
                         </button>
-                        <span className="w-8 text-center font-semibold text-lg">{guestCount}</span>
+                        <span className="w-8 text-center font-medium">{guestCount}</span>
                         <button
                           type="button"
-                          onClick={() => updateRoomGuests(index, guestCount + 1)}
+                          onClick={() => updateRoomGuests(index, 1)}
                           disabled={guestCount >= 10}
-                          className="w-8 h-8 rounded border border-gray-300 hover:bg-gray-100 text-gray-700 font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
+                          className="w-8 h-8 rounded border border-gray-300 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold"
                         >
                           +
                         </button>
@@ -282,13 +313,13 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
                   ))}
                 </div>
 
-                {/* Footer Actions */}
-                <div className="flex border-t border-gray-200 bg-gray-50">
+                {/* Footer */}
+                <div className="flex border-t border-gray-200">
                   <button
                     type="button"
-                    onClick={deleteRoom}
-                    disabled={roomGuests.length <= 1}
-                    className="flex-1 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    onClick={() => deleteRoom(roomConfigs.length - 1)}
+                    disabled={roomConfigs.length <= 1}
+                    className="flex-1 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     Delete Room
                   </button>
@@ -296,8 +327,8 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
                   <button
                     type="button"
                     onClick={addRoom}
-                    disabled={roomGuests.length >= 10}
-                    className="flex-1 py-3 text-sm font-medium text-green-600 hover:bg-green-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    disabled={roomConfigs.length >= 10}
+                    className="flex-1 py-3 text-sm font-medium text-green-600 hover:bg-green-50 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     Add Room
                   </button>
@@ -306,10 +337,10 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
             )}
           </div>
 
-          {/* Search Button - Full Green */}
+          {/* Search Button */}
           <button
             type="submit"
-            className="flex-1 min-w-[140px] py-4 bg-green-600 hover:bg-green-700 text-white font-bold text-lg transition-all rounded-r-xl"
+            className="px-8 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm transition-colors rounded-r-lg"
           >
             Search
           </button>
@@ -318,4 +349,3 @@ export function OYOSearchBar({ className = "" }: OYOSearchBarProps) {
     </div>
   );
 }
-

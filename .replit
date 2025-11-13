@@ -30,11 +30,15 @@ args = "NODE_OPTIONS='--max-old-space-size=2048' SKIP_ENV_VALIDATION=true npm ru
 waitForPort = 5000
 
 [[ports]]
+localPort = 3001
+externalPort = 3001
+
+[[ports]]
 localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 36275
+localPort = 36493
 externalPort = 3000
 
 [deployment]
